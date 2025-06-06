@@ -50,6 +50,8 @@ const _BEDROCK_GUARDRAIL_ARN: string = 'arn:aws:bedrock:us-east-1:123456789012:g
 const _BEDROCK_KNOWLEDGEBASE_ID: string = 'KnowledgeBaseId';
 const _GEN_AI_SYSTEM: string = 'aws.bedrock';
 const _GEN_AI_REQUEST_MODEL: string = 'genAiReuqestModelId';
+const _STREAM_ARN: string = 'arn:aws:kinesis:us-west-2:123456789012:stream/testStream';
+const _TABLE_ARN: string = 'arn:aws:dynamodb:us-west-2:123456789012:table/testTable';
 
 const mockHeaders = {
   'x-test-header': 'test-value',
@@ -82,6 +84,10 @@ describe('InstrumentationPatchTest', () => {
     expect(services.get('Lambda').requestPreSpanHook).toBeTruthy();
     expect(services.get('SQS')._requestPreSpanHook).toBeFalsy();
     expect(services.get('SQS').requestPreSpanHook).toBeTruthy();
+    expect(services.get('DynamoDB')._requestPreSpanHook).toBeFalsy();
+    expect(services.get('DynamoDB').requestPreSpanHook).toBeTruthy();
+    expect(services.get('Kinesis')._requestPreSpanHook).toBeFalsy();
+    expect(services.get('Kinesis').requestPreSpanHook).toBeTruthy();
     expect(services.has('Bedrock')).toBeFalsy();
     expect(services.has('BedrockAgent')).toBeFalsy();
     expect(services.get('BedrockAgentRuntime')).toBeFalsy();
@@ -111,6 +117,9 @@ describe('InstrumentationPatchTest', () => {
     expect(services.get('Lambda').requestPreSpanHook).toBeTruthy();
     expect(services.get('SQS')._requestPreSpanHook).toBeTruthy();
     expect(services.get('SQS').requestPreSpanHook).toBeTruthy();
+    expect(services.get('DynamoDB').requestPreSpanHook).toBeTruthy();
+    expect(services.get('Kinesis')._requestPreSpanHook).toBeTruthy();
+    expect(services.get('Kinesis').requestPreSpanHook).toBeTruthy();
     expect(services.has('Bedrock')).toBeTruthy();
     expect(services.has('BedrockAgent')).toBeTruthy();
     expect(services.get('BedrockAgentRuntime')).toBeTruthy();
@@ -171,6 +180,14 @@ describe('InstrumentationPatchTest', () => {
     expect(() => doExtractBedrockAttributes(services, 'Bedrock')).toThrow();
   });
 
+  it('Kinesis without patching', () => {
+    const unpatchedAwsSdkInstrumentation: AwsInstrumentation = extractAwsSdkInstrumentation(UNPATCHED_INSTRUMENTATIONS);
+    const services: Map<string, any> = extractServicesFromAwsSdkInstrumentation(unpatchedAwsSdkInstrumentation);
+    expect(() => doExtractKinesisAttributes(services)).not.toThrow();
+    const kinesisAttributes: Attributes = doExtractKinesisAttributes(services);
+    expect(kinesisAttributes[AWS_ATTRIBUTE_KEYS.AWS_KINESIS_STREAM_ARN]).toBeUndefined();
+  });
+
   it('SNS with patching', () => {
     const patchedAwsSdkInstrumentation: AwsInstrumentation = extractAwsSdkInstrumentation(PATCHED_INSTRUMENTATIONS);
     const services: Map<string, any> = extractServicesFromAwsSdkInstrumentation(patchedAwsSdkInstrumentation);
@@ -223,6 +240,20 @@ describe('InstrumentationPatchTest', () => {
     const responseHookSecretsManagerAttributes = doResponseHookSecretsManager(services);
 
     expect(responseHookSecretsManagerAttributes[AWS_ATTRIBUTE_KEYS.AWS_SECRETSMANAGER_SECRET_ARN]).toBe(_SECRETS_ARN);
+  });
+
+  it('Kinesis with patching', () => {
+    const patchedAwsSdkInstrumentation: AwsInstrumentation = extractAwsSdkInstrumentation(PATCHED_INSTRUMENTATIONS);
+    const services: Map<string, any> = extractServicesFromAwsSdkInstrumentation(patchedAwsSdkInstrumentation);
+    const requestKinesisAttributes: Attributes = doExtractKinesisAttributes(services);
+    expect(requestKinesisAttributes[AWS_ATTRIBUTE_KEYS.AWS_KINESIS_STREAM_ARN]).toEqual(_STREAM_ARN);
+  });
+
+  it('DynamoDB with patching', () => {
+    const patchedAwsSdkInstrumentation: AwsInstrumentation = extractAwsSdkInstrumentation(PATCHED_INSTRUMENTATIONS);
+    const services: Map<string, any> = extractServicesFromAwsSdkInstrumentation(patchedAwsSdkInstrumentation);
+    const responseDynamoDbAttributes: Attributes = doResponseHookDynamoDb(services);
+    expect(responseDynamoDbAttributes[AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_ARN]).toEqual(_TABLE_ARN);
   });
 
   it('Bedrock with patching', () => {
@@ -430,6 +461,18 @@ describe('InstrumentationPatchTest', () => {
     return doExtractAttributes(services, serviceName, params);
   }
 
+  function doExtractKinesisAttributes(services: Map<string, ServiceExtension>): Attributes {
+    const serviceName: string = 'Kinesis';
+    const params: NormalizedRequest = {
+      serviceName: serviceName,
+      commandName: 'mockCommandName',
+      commandInput: {
+        StreamARN: _STREAM_ARN,
+      },
+    };
+    return doExtractAttributes(services, serviceName, params);
+  }
+
   function doExtractAttributes(
     services: Map<string, ServiceExtension>,
     serviceName: string,
@@ -474,6 +517,23 @@ describe('InstrumentationPatchTest', () => {
     };
 
     return doResponseHook(services, 'Lambda', results as NormalizedResponse);
+  }
+
+  function doResponseHookDynamoDb(services: Map<string, ServiceExtension>): Attributes {
+    const results: Partial<NormalizedResponse> = {
+      data: {
+        TableDescription: {
+          TableArn: _TABLE_ARN,
+        },
+      },
+      request: {
+        commandInput: {},
+        commandName: 'dummy_operation',
+        serviceName: 'DynamoDB',
+      },
+    };
+
+    return doResponseHook(services, 'DynamoDB', results as NormalizedResponse);
   }
 
   function doResponseHookBedrock(
@@ -540,29 +600,47 @@ describe('InstrumentationPatchTest', () => {
       const mockedMiddlewareStack = {
         add: (arg1: any, arg2: any) => mockedMiddlewareStackInternal.push([arg1, arg2]),
       };
+      const mockConfig = {
+        credentials: () => Promise.resolve({ accessKeyId: 'test-access-key' }),
+        region: () => Promise.resolve('us-west-2'),
+      };
       const send = extractAwsSdkInstrumentation(PATCHED_INSTRUMENTATIONS)
         ['_getV3SmithyClientSendPatch']((...args: unknown[]) => Promise.resolve())
-        .bind({ middlewareStack: mockedMiddlewareStack });
+        .bind({ middlewareStack: mockedMiddlewareStack, config: mockConfig });
       sinon
         .stub(AWSXRayPropagator.prototype, 'inject')
         .callsFake((context: OtelContext, carrier: unknown, setter: TextMapSetter) => {
           (carrier as any)['isCarrierModified'] = 'carrierIsModified';
         });
 
+      const mockSpan = { setAttribute: sinon.stub() };
+      sinon.stub(trace, 'getSpan').returns(mockSpan as unknown as Span);
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       await send({}, null);
 
-      const middlewareArgs: any = {
+      // Verify both middlewares were added
+      expect(mockedMiddlewareStackInternal.length).toEqual(2);
+      expect(mockedMiddlewareStackInternal[0][1].name).toEqual('_extractSignerCredentials');
+      expect(mockedMiddlewareStackInternal[1][1].name).toEqual('_adotInjectXrayContextMiddleware');
+
+      // Test the credentials middleware
+      const credentialsMiddlewareArgs: any = {};
+      await mockedMiddlewareStackInternal[0][0]((arg: any) => Promise.resolve(arg), null)(credentialsMiddlewareArgs);
+      expect(mockSpan.setAttribute.calledWith(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCESS_KEY, 'test-access-key')).toBeTruthy();
+      expect(mockSpan.setAttribute.calledWith(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, 'us-west-2')).toBeTruthy();
+
+      // Test the X-Ray context injection middleware
+      const xrayMiddlewareArgs: any = {
         request: {
           headers: {},
         },
       };
-      await mockedMiddlewareStackInternal[0][0]((arg: any) => Promise.resolve(), null)(middlewareArgs);
+      await mockedMiddlewareStackInternal[1][0]((arg: any) => Promise.resolve(), null)(xrayMiddlewareArgs);
+      expect(xrayMiddlewareArgs.request.headers['isCarrierModified']).toEqual('carrierIsModified');
 
       sinon.restore();
-      expect(middlewareArgs.request.headers['isCarrierModified']).toEqual('carrierIsModified');
-      expect(mockedMiddlewareStackInternal[0][1].name).toEqual('_adotInjectXrayContextMiddleware');
     });
 
     it('injects trace context header into request via propagator', async () => {

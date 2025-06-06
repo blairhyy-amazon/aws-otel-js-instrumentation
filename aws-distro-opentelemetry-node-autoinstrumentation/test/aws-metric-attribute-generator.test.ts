@@ -799,7 +799,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
 
     // Validate behaviour of AWS_SNS_TOPIC_ARN attribute then remove it.
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_SNS_TOPIC_ARN, 'arn:aws:sns:us-east-1:123456789012:testTopic');
-    validateRemoteResourceAttributes('AWS::SNS::Topic', 'testTopic', 'us-east-2', '123456789012', undefined);
+    validateRemoteResourceAttributes('AWS::SNS::Topic', 'testTopic', 'us-east-1', '123456789012', undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_SNS_TOPIC_ARN, undefined);
 
     // Validate behaviour of AWS_SECRETSMANAGER_SECRET_ARN attributes then remove it.
@@ -810,7 +810,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
     validateRemoteResourceAttributes(
       'AWS::SecretsManager::Secret',
       'testSecret',
-      'us-east-2',
+      'us-east-1',
       '123456789123',
       undefined
     );
@@ -913,6 +913,13 @@ describe('AwsMetricAttributeGeneratorTest', () => {
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_NAMES, undefined);
 
+    mockAttribute(
+      AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_ARN,
+      'arn:aws:dynamodb:us-west-2:123456789012:table/aws_table_name'
+    );
+    validateRemoteResourceAttributes('AWS::DynamoDB::Table', 'aws_table_name', 'us-west-2', '123456789012', undefined);
+    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_ARN, undefined);
+
     // Validate behaviour of AWS_BEDROCK_AGENT_ID attribute, then remove it.
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_AGENT_ID, 'test_agent_id');
     validateRemoteResourceAttributes(
@@ -971,6 +978,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       undefined
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_GUARDRAIL_ID, undefined);
+    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_GUARDRAIL_ARN, undefined);
 
     // Validate behaviour of AWS_BEDROCK_GUARDRAIL_ID attribute with special chars(^), then remove it.
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_GUARDRAIL_ID, 'test_guardrail_^id');
@@ -1030,20 +1038,14 @@ describe('AwsMetricAttributeGeneratorTest', () => {
     // Cross account support
     // Invalid arn but account access key is available
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, 'invalid_arn');
-    validateRemoteResourceAttributes(
-      'AWS::StepFunctions::StateMachine',
-      'invalid_arn',
-      AWS_REMOTE_RESOURCE_REGION,
-      undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
-    );
+    validateRemoteResourceAttributes(undefined, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, undefined);
 
     // Invalid arn and no account access key
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCESS_KEY, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, 'invalid_arn');
-    validateRemoteResourceAttributes('AWS::StepFunctions::StateMachine', 'invalid_arn');
+    validateRemoteResourceAttributes(undefined, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, undefined);
 
     // Both account access key and account id are not available

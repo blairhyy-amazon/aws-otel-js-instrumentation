@@ -378,7 +378,7 @@ function patchAwsSdkInstrumentation(instrumentation: Instrumentation): void {
               const credsProvider = this.config.credentials;
               if (credsProvider && span) {
                 const credentials = await credsProvider();
-                if (credentials.accessKeyId){
+                if (credentials.accessKeyId) {
                   span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCESS_KEY, credentials.accessKeyId);
                 }
               }
@@ -391,7 +391,7 @@ function patchAwsSdkInstrumentation(instrumentation: Instrumentation): void {
             } catch (err) {
               // Silently handle errors to avoid disrupting the request flow
             }
-            
+
             return await next(middlewareArgs);
           },
           {

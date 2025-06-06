@@ -5,14 +5,17 @@ import { SEMATTRS_AWS_DYNAMODB_TABLE_NAMES } from '@opentelemetry/semantic-conve
 
 // Utility class holding attribute keys with special meaning to AWS components
 export const AWS_ATTRIBUTE_KEYS: { [key: string]: string } = {
-  AWS_AUTH_ACCESS_KEY: "aws.auth.access_key",
-  AWS_AUTH_REGION: "aws.auth.region",
+  AWS_AUTH_ACCESS_KEY: 'aws.auth.access_key',
+  AWS_AUTH_REGION: 'aws.auth.region',
   AWS_SPAN_KIND: 'aws.span.kind',
   AWS_LOCAL_SERVICE: 'aws.local.service',
   AWS_LOCAL_OPERATION: 'aws.local.operation',
   AWS_REMOTE_SERVICE: 'aws.remote.service',
   AWS_REMOTE_ENVIRONMENT: 'aws.remote.environment',
   AWS_REMOTE_OPERATION: 'aws.remote.operation',
+  AWS_REMOTE_RESOURCE_ACCESS_KEY: 'aws.remote.resource.account.access_key',
+  AWS_REMOTE_RESOURCE_ACCOUNT_ID: 'aws.remote.resource.account.id',
+  AWS_REMOTE_RESOURCE_REGION: 'aws.remote.resource.region',
   AWS_REMOTE_RESOURCE_TYPE: 'aws.remote.resource.type',
   AWS_REMOTE_RESOURCE_IDENTIFIER: 'aws.remote.resource.identifier',
   AWS_SDK_DESCENDANT: 'aws.sdk.descendant',

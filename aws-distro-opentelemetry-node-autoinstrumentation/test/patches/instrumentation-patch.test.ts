@@ -522,7 +522,7 @@ describe('InstrumentationPatchTest', () => {
   function doResponseHookDynamoDb(services: Map<string, ServiceExtension>): Attributes {
     const results: Partial<NormalizedResponse> = {
       data: {
-        TableDescription: {
+        Table: {
           TableArn: _TABLE_ARN,
         },
       },

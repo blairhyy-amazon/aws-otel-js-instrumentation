@@ -240,8 +240,8 @@ function patchDynamoDbServiceExtension(dynamoDbServiceExtension: any): void {
       ): void => {
         originalResponseHook.call(dynamoDbServiceExtension, response, span, tracer, config);
 
-        if (response.data && response.data.TableDescription) {
-          const tableArn = response.data.TableDescription.TableArn;
+        if (response.data && response.data.Table) {
+          const tableArn = response.data.Table.TableArn;
           if (tableArn) {
             span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_ARN, tableArn);
           }

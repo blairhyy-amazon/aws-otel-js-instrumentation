@@ -31,6 +31,7 @@ _logger.setLevel(INFO)
 
 _AWS_SQS_QUEUE_URL: str = "aws.sqs.queue.url"
 _AWS_SQS_QUEUE_NAME: str = "aws.sqs.queue.name"
+_AWS_KINESIS_STREAM_ARN: str = "aws.kinesis.stream.arn"
 _AWS_KINESIS_STREAM_NAME: str = "aws.kinesis.stream.name"
 _AWS_BEDROCK_AGENT_ID: str = "aws.bedrock.agent.id"
 _AWS_BEDROCK_GUARDRAIL_ID: str = "aws.bedrock.guardrail.id"
@@ -49,6 +50,7 @@ _GEN_AI_REQUEST_MAX_TOKENS: str = "gen_ai.request.max_tokens"
 _GEN_AI_RESPONSE_FINISH_REASONS: str = "gen_ai.response.finish_reasons"
 _GEN_AI_USAGE_INPUT_TOKENS: str = 'gen_ai.usage.input_tokens'
 _GEN_AI_USAGE_OUTPUT_TOKENS: str = 'gen_ai.usage.output_tokens'
+_AWS_DYNAMODB_TABLE_ARN: str = "aws.dynamodb.table.arn"
 
 # pylint: disable=too-many-public-methods
 class AWSSDKTest(ContractTestBase):
@@ -396,6 +398,27 @@ class AWSSDKTest(ContractTestBase):
                 _AWS_KINESIS_STREAM_NAME: "test_stream",
             },
             span_name="Kinesis.PutRecord",
+        )
+    
+    def test_kinesis_describe_stream(self):
+        self.do_test_requests(
+            "kinesis/describe/my-stream",
+            "GET",
+            200,
+            0,
+            0,
+            local_operation="GET /kinesis",
+            remote_service="AWS::Kinesis",
+            remote_operation="DescribeStream",
+            remote_resource_type="AWS::Kinesis::Stream",
+            remote_resource_identifier="test_stream",
+            cloudformation_primary_identifier="test_stream",
+            remote_resource_account_id="000000000000",
+            remote_resource_region="us-west-2",
+            request_specific_attributes={
+                _AWS_KINESIS_STREAM_NAME: "test_stream",
+            },
+            span_name="Kinesis.DescribeStream",
         )
 
     def test_kinesis_error(self):

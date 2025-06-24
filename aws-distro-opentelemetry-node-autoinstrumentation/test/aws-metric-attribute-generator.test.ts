@@ -62,7 +62,7 @@ const UNKNOWN_REMOTE_OPERATION: string = 'UnknownRemoteOperation';
 const INTERNAL_OPERATION: string = 'InternalOperation';
 const LOCAL_ROOT: string = 'LOCAL_ROOT';
 const AWS_REMOTE_RESOURCE_REGION: string = 'us-east-1';
-const AWS_REMOTE_RESOURCE_ACCESS_KEY: string = 'AWS access key';
+const AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY: string = 'AWS access key';
 
 const GENERATOR: AwsMetricAttributeGenerator = new AwsMetricAttributeGenerator();
 
@@ -733,7 +733,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
 
   it('testSdkClientSpanWithRemoteResourceAttributes', () => {
     mockAttribute(SEMATTRS_RPC_SYSTEM, 'aws-api');
-    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCESS_KEY, AWS_REMOTE_RESOURCE_ACCESS_KEY);
+    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCOUNT_ACCESS_KEY, AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, AWS_REMOTE_RESOURCE_REGION);
     // Validate behaviour of aws bucket name attribute, then remove it.
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_S3_BUCKET, 'aws_s3_bucket_name');
@@ -742,7 +742,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_s3_bucket_name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_S3_BUCKET, undefined);
 
@@ -753,7 +753,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_queue_name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_SQS_QUEUE_NAME, undefined);
 
@@ -773,7 +773,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_queue_name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_SQS_QUEUE_URL, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_SQS_QUEUE_NAME, undefined);
@@ -785,7 +785,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'AWS_KINESIS_STREAM_NAME',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_KINESIS_STREAM_NAME, undefined);
 
@@ -839,7 +839,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_lambda_resource_mapping_id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_LAMBDA_RESOURCE_MAPPING_ID, undefined);
 
@@ -877,7 +877,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_table_name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_NAMES, undefined);
 
@@ -898,7 +898,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_table^|name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_NAMES, undefined);
 
@@ -909,7 +909,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'aws_table^^name',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_NAMES, undefined);
 
@@ -928,7 +928,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_agent_id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_DYNAMODB_TABLE_NAMES, undefined);
 
@@ -939,7 +939,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_agent_^^id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_AGENT_ID, undefined);
 
@@ -950,7 +950,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_datasource_id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_DATA_SOURCE_ID, undefined);
 
@@ -961,7 +961,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_datasource_^^id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_DATA_SOURCE_ID, undefined);
 
@@ -988,7 +988,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_guardrail_^^id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_GUARDRAIL_ID, undefined);
 
@@ -999,7 +999,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_knowledgeBase_id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_KNOWLEDGE_BASE_ID, undefined);
 
@@ -1010,7 +1010,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test_knowledgeBase_^^id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_BEDROCK_KNOWLEDGE_BASE_ID, undefined);
 
@@ -1021,7 +1021,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test.service_id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AwsSpanProcessingUtil.GEN_AI_REQUEST_MODEL, undefined);
 
@@ -1032,7 +1032,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
       'test.service_^^id',
       AWS_REMOTE_RESOURCE_REGION,
       undefined,
-      AWS_REMOTE_RESOURCE_ACCESS_KEY
+      AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY
     );
     mockAttribute(AwsSpanProcessingUtil.GEN_AI_REQUEST_MODEL, undefined);
 
@@ -1043,7 +1043,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, undefined);
 
     // Invalid arn and no account access key
-    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCESS_KEY, undefined);
+    mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCOUNT_ACCESS_KEY, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, undefined);
     mockAttribute(AWS_ATTRIBUTE_KEYS.AWS_STEPFUNCTIONS_STATEMACHINE_ARN, 'invalid_arn');
     validateRemoteResourceAttributes(undefined, undefined);
@@ -1352,16 +1352,16 @@ describe('AwsMetricAttributeGeneratorTest', () => {
 
       if (accountId !== undefined) {
         expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ID]).toEqual(accountId);
-        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCESS_KEY]).toEqual(undefined);
+        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY]).toEqual(undefined);
       } else {
         expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ID]).toEqual(undefined);
       }
 
       if (accessKey !== undefined) {
-        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCESS_KEY]).toEqual(accessKey);
+        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY]).toEqual(accessKey);
         expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ID]).toEqual(undefined);
       } else {
-        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCESS_KEY]).toEqual(undefined);
+        expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY]).toEqual(undefined);
       }
     }
 
@@ -1372,7 +1372,7 @@ describe('AwsMetricAttributeGeneratorTest', () => {
     expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_IDENTIFIER]).toEqual(undefined);
     expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_REGION]).toEqual(undefined);
     expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ID]).toEqual(undefined);
-    expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCESS_KEY]).toEqual(undefined);
+    expect(actualAttributes[AWS_ATTRIBUTE_KEYS.AWS_REMOTE_RESOURCE_ACCOUNT_ACCESS_KEY]).toEqual(undefined);
   }
 
   it('testDBUserAttribute', () => {

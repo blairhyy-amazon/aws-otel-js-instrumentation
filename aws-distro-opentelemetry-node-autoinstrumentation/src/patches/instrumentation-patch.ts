@@ -36,6 +36,7 @@ import { SecretsManagerServiceExtension } from './aws/services/secretsmanager';
 import { StepFunctionsServiceExtension } from './aws/services/step-functions';
 import { AwsLambdaInstrumentation } from '@opentelemetry/instrumentation-aws-lambda';
 import type { Command as AwsV3Command } from '@aws-sdk/types';
+import { suppressTracing } from '@opentelemetry/core';
 
 export const traceContextEnvironmentKey = '_X_AMZN_TRACE_ID';
 export const AWSXRAY_TRACE_ID_HEADER_CAPITALIZED = 'X-Amzn-Trace-Id';
@@ -364,67 +365,77 @@ const V3_CLIENT_CONFIG_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.clien
 type V3PluginCommand = AwsV3Command<any, any, any, any, any> & {
   [V3_CLIENT_CONFIG_KEY]?: any;
 };
+const SKIP_CREDENTIAL_CAPTURE_KEY = Symbol('skip-credential-capture');
 function patchAwsSdkInstrumentation(instrumentation: Instrumentation): void {
   if (instrumentation) {
     (instrumentation as AwsInstrumentation)['_getV3SmithyClientSendPatch'] = function (
       original: (...args: unknown[]) => Promise<any>
     ) {
       return function send(this: any, command: V3PluginCommand, ...args: unknown[]): Promise<any> {
-        this.middlewareStack?.add(
-          (next: any, context: any) => async (middlewareArgs: any) => {
-            propagation.inject(otelContext.active(), middlewareArgs.request.headers, defaultTextMapSetter);
-            // Need to set capitalized version of the trace id to ensure that the Recursion Detection Middleware
-            // of aws-sdk-js-v3 will detect the propagated X-Ray Context
-            // See: https://github.com/aws/aws-sdk-js-v3/blob/v3.768.0/packages/middleware-recursion-detection/src/index.ts#L13
-            const xrayTraceId = middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER];
+        if (!this.__adotMiddlewarePatched) {
+          this.middlewareStack?.add(
+            (next: any, context: any) => async (middlewareArgs: any) => {
+              propagation.inject(otelContext.active(), middlewareArgs.request.headers, defaultTextMapSetter);
+              // Need to set capitalized version of the trace id to ensure that the Recursion Detection Middleware
+              // of aws-sdk-js-v3 will detect the propagated X-Ray Context
+              // See: https://github.com/aws/aws-sdk-js-v3/blob/v3.768.0/packages/middleware-recursion-detection/src/index.ts#L13
+              const xrayTraceId = middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER];
 
-            if (xrayTraceId) {
-              middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER_CAPITALIZED] = xrayTraceId;
-              delete middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER];
-            }
-            const result = await next(middlewareArgs);
-            return result;
-          },
-          {
-            step: 'build',
-            name: '_adotInjectXrayContextMiddleware',
-            override: true,
-          }
-        );
-
-        this.middlewareStack?.add(
-          (next: any, context: any) => async (middlewareArgs: any) => {
-            const activeContext = otelContext.active();
-            const span = trace.getSpan(activeContext);
-
-            if (span) {
-              try {
-                const credsProvider = this.config.credentials;
-                if (credsProvider instanceof Function) {
-                  const credentials = await credsProvider();
-                  if (credentials?.accessKeyId) {
-                    span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCOUNT_ACCESS_KEY, credentials.accessKeyId);
-                  }
-                }
-                if (this.config.region instanceof Function) {
-                  const region = await this.config.region();
-                  if (region) {
-                    span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, region);
-                  }
-                }
-              } catch (err) {
-                diag.debug('Failed to get auth account access key and region:', err);
+              if (xrayTraceId) {
+                middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER_CAPITALIZED] = xrayTraceId;
+                delete middlewareArgs.request.headers[AWSXRAY_TRACE_ID_HEADER];
               }
+              const result = await next(middlewareArgs);
+              return result;
+            },
+            {
+              step: 'build',
+              name: '_adotInjectXrayContextMiddleware',
+              override: true,
             }
+          );
 
-            return await next(middlewareArgs);
-          },
-          {
-            step: 'build',
-            name: '_adotExtractSignerCredentials',
-            override: true,
-          }
-        );
+          this.middlewareStack?.add(
+            (next: any, context: any) => async (middlewareArgs: any) => {
+              const activeContext = otelContext.active();
+              if (activeContext.getValue(SKIP_CREDENTIAL_CAPTURE_KEY)) {
+                return await next(middlewareArgs);
+              }
+              const span = trace.getSpan(activeContext);
+
+              if (span) {
+                const suppressedContext = suppressTracing(activeContext).setValue(SKIP_CREDENTIAL_CAPTURE_KEY, true);
+                await otelContext.with(suppressedContext, async () => {
+                  try {
+                    const credsProvider = this.config.credentials;
+                    if (credsProvider instanceof Function) {
+                      const credentials = await credsProvider();
+                      if (credentials?.accessKeyId) {
+                        span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_ACCOUNT_ACCESS_KEY, credentials.accessKeyId);
+                      }
+                    }
+                    if (this.config.region instanceof Function) {
+                      const region = await this.config.region();
+                      if (region) {
+                        span.setAttribute(AWS_ATTRIBUTE_KEYS.AWS_AUTH_REGION, region);
+                      }
+                    }
+                  } catch (err) {
+                    diag.debug('Failed to get auth account access key and region:', err);
+                  }
+                });
+              }
+
+              return await next(middlewareArgs);
+            },
+            {
+              step: 'build',
+              name: '_adotExtractSignerCredentials',
+              override: true,
+            }
+          );
+          this.__adotMiddlewarePatched = true;
+        }
 
         command[V3_CLIENT_CONFIG_KEY] = this.config;
         return original.apply(this, [command, ...args]);
